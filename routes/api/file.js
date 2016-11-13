@@ -4,7 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var mime = require('mime');
 var multer = require('multer');
-var fileType = ['image/png', 'image/gif', 'image/jpeg', 'application/x-zip-compressed', 'application/vnd.ms-excel', 'video/mp4'];
+var fileType = ['application/pdf', 'application/javascript', 'image/png', 'image/gif', 'image/jpeg', 'application/x-zip-compressed', 'application/vnd.ms-excel', 'video/mp4'];
 
 var utils = require('npm-utils-kingwell');
 var upload = multer({
@@ -55,14 +55,25 @@ router.get('/:id', function(req, res, next) {
 
 	});
 });
-
+var getFileType = function(str) {
+	return {
+		'vnd.ms-excel': 'xls',
+		'javascript': 'js'
+	}[str] || str;
+};
 var uploads = upload.any();
 router.post('/upload', function(req, res, next) {
 	uploads(req, res, function(err) {
 		if (err) {
 			res.send(err);
 		} else {
-			res.send(req.files);
+			var obj = req.files.map(function(item) {
+				delete item.destination;
+				delete item.path;
+				item.url = req.headers.origin + req.baseUrl + '/' + item.filename + '.' + getFileType(item.mimetype.split('/')[1]);
+				return item;
+			});
+			res.send(obj);
 		}
 
 	});
